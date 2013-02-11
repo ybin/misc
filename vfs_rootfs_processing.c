@@ -1,4 +1,3 @@
-
 // Part I. 注册rootfs文件系统.
 // 0. init_rootfs function [@fs/ramfs/inode.c]
 int __init init_rootfs(void)
@@ -30,7 +29,7 @@ int register_filesystem(struct file_system_type * fs)
 	int res = 0;
 	struct file_system_type ** p;
 
-	BUG_ON(strchr(fs->name, '.'));
+	BUG_ON(strchr(fs->name, '.')); 
 	if (fs->next)
 		return -EBUSY;
 	write_lock(&file_systems_lock);
