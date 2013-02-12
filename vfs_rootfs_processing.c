@@ -79,7 +79,7 @@ static void __init init_mount_tree(void)
 	get_mnt_ns(ns);
 	//*** end namespace
 
-	//*** initialize root directory & pwd(present working directory)
+	//*** initialize process root directory(not "/") & pwd(present working directory)
 	root.mnt = mnt;
 	root.dentry = mnt->mnt_root;
 
@@ -211,8 +211,9 @@ int ramfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_op		= &ramfs_ops;	// 这个s_op是很重要的
 	sb->s_time_gran		= 1;
 
-	//*** 为根目录("/")分配inode结构体, 并稍作初始化.
+	//*** 为根目录("/")分配inode结构体, 并初始化.
 	inode = ramfs_get_inode(sb, NULL, S_IFDIR | fsi->mount_opts.mode, 0);
+	//*** 为根目录("/")创建dentry结构体, 并初始化.
 	sb->s_root = d_make_root(inode);
 	if (!sb->s_root)
 		return -ENOMEM;
@@ -220,7 +221,7 @@ int ramfs_fill_super(struct super_block *sb, void *data, int silent)
 	return 0;
 }
 
-// 11. ramfs_get_inode function [@fs/ramfs/inode.c]
+// 11.1 ramfs_get_inode function [@fs/ramfs/inode.c]
 // 主要是初始化inode结构体, 其中有些有趣的函数, 如get_next_ino()函数
 struct inode *ramfs_get_inode(struct super_block *sb,
 				const struct inode *dir, umode_t mode, dev_t dev)
@@ -237,6 +238,8 @@ struct inode *ramfs_get_inode(struct super_block *sb,
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 		switch (mode & S_IFMT) {
 		default:
+			//*** 注意这个地方哦, block device, char device等设备的
+			//*** inode->i_fop变量都是在这里设置的, 直接跟驱动对接, 很关键的一个函数.
 			init_special_inode(inode, mode, dev);
 			break;
 		case S_IFREG:
@@ -258,7 +261,7 @@ struct inode *ramfs_get_inode(struct super_block *sb,
 	return inode;
 }
 
-// 12. d_make_root function [@fs/dcache.c]
+// 11.2 d_make_root function [@fs/dcache.c]
 // 创建根目录("/")对应的dentry结构体
 struct dentry *d_make_root(struct inode *root_inode)
 {
@@ -268,12 +271,30 @@ struct dentry *d_make_root(struct inode *root_inode)
 		//*** yep! 根目录("/")终于出现啦！
 		static const struct qstr name = QSTR_INIT("/", 1);
 
+		//*** alloc dentry struct
 		res = __d_alloc(root_inode->i_sb, &name);
 		if (res)
+			//*** this is the main operation.
 			d_instantiate(res, root_inode);
 		else
 			iput(root_inode);
 	}
 	return res;
+}
+
+// 12. d_instantiate() function => __d_instantiate() function [@fs/dcache.c]
+static void __d_instantiate(struct dentry *dentry, struct inode *inode)
+{
+	spin_lock(&dentry->d_lock);
+	if (inode) {
+		if (unlikely(IS_AUTOMOUNT(inode)))
+			dentry->d_flags |= DCACHE_NEED_AUTOMOUNT;
+		hlist_add_head(&dentry->d_alias, &inode->i_dentry);
+	}
+	//*** this is the main operation.
+	dentry->d_inode = inode;
+	dentry_rcuwalk_barrier(dentry);
+	spin_unlock(&dentry->d_lock);
+	fsnotify_d_instantiate(dentry, inode);
 }
 
