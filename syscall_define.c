@@ -1,4 +1,5 @@
 
+
 // 0. SYSCALL_DEFINE3 macro [@include/linux/syscalls.h]
 #define SYSCALL_DEFINE3(name, ...) SYSCALL_DEFINEx(3, _##name, __VA_ARGS__)
 
@@ -22,3 +23,10 @@
 //		最后展开为:
 //			long sys_open(const char _user * filename, int flags, umode_t mode)
 //		所以 SYSCALL_DEFINE3 中的 3 代表 3 个参数.
+
+// P.S.
+#define debug(...) printf(__VA_ARGS__)
+// 缺省号代表一个可以变化的参数表。使用保留名 __VA_ARGS__ 把参数传递给宏。当宏的调用展开时，实际的参数就传递给 printf()了。例如: 
+// Debug("Y = %d\n", y);
+// 而处理器会把宏的调用替换成: 
+printf("Y = %d\n", y);
