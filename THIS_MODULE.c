@@ -3,7 +3,7 @@
 extern struct module __this_module;
 #define THIS_MODULE (&__this_module)
 
-// main.c => __this_module [@scripts/mod/modpost.c]
+// __this_module [@scripts/mod/modpost.c]
 static void add_header(struct buffer *b, struct module *mod)
 {
 	buf_printf(b, "#include <linux/module.h>\n");
@@ -25,6 +25,7 @@ static void add_header(struct buffer *b, struct module *mod)
 	buf_printf(b, "};\n");
 }
 
+// kernel用struct module列表来代表各种module
 // 由此创建了 xxx.mod.c 文件, 但是module name还是没有找到,
 
 // KBUILD_MODNAME 创建方式如下: [@Makefile]
