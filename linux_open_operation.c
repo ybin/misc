@@ -5,7 +5,7 @@
  */
  
  // Part One
- // 0. system call entrance
+ // 0. system call entrance [@fs/open.c]
  SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, int, mode)
 {
 	long ret;
@@ -19,7 +19,7 @@
 	return ret;
 }
 
-// 1. do_sys_open
+// 1. do_sys_open [@fs/open.c]
 long do_sys_open(int dfd, const char __user *filename, int flags, int mode)
 {
 	char *tmp = getname(filename);
