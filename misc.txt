@@ -1,4 +1,7 @@
 
-0. Android中通过adb查看系统权限列表
+0. Android中pm(package manager)命令
+// list permissions
 adb shell
 pm list permissions
+// list packages
+pm list packages
