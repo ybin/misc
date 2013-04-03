@@ -12,10 +12,16 @@ goto :program
 	:: %3 - branch, e.g. android-msm-sony-cm-jb-3.0
 	setlocal
 	echo Export folder: %1.
-	if not exist %1 (mkdir %1 & cd %1)
+	if not exist %1 (
+		mkdir %1 & cd %1
+	) else (
+		goto :func_end
+	)
 	git init
 	git remote add -t %3 origin %base_url%/%2
 	git fetch --depth=1 & git merge origin/%3
+	cd ..
+:func_end
 	endlocal & goto :EOF
 	
 :::: program area ::::
@@ -30,9 +36,7 @@ set base_url=https://android.googlesource.com
 ::)
 
 for /f "eol=#" %%i in (source_dir.txt) do (
-	echo %%i
 	for /f "tokens=1,2,3 delims=:" %%a in ("%%i") do (
-		::call :export %%a %%b %%c
-		echo %%a %%b %%c
+		call :export %%a %%b %%c
 	)
 )
