@@ -1,0 +1,8 @@
+# <folder>:<repo-name>:<branch-name>
+
+# hardware
+hardware:repo:branch
+# kernel
+kernel:kernel/msm:android-msm-sony-cm-jb-3.0
+# system
+system:system:branch
