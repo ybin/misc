@@ -1,7 +1,0 @@
-git fetch/pull/push的统一格式为：
-    git fetch/pull/push <repo> <src>:<dst>
-但是对于“方向”不同的操作，src和dst指代不同，
-对于fetch和pull，src指远程分支，dst指本地分支，而对于push则相反。
-
-git ls-remote [--heads] [--tags] <repo>
-    列举出<repo>中所有的refs
