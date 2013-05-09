@@ -4,75 +4,106 @@
 ' module statistics
 '
 ' Author: syb
-' Date  : 2013.05.08
+' Date	: 2013.05.08
 ' 
 '======================
 dim vFileName
 dim vSheetName_1
 dim vSheetName_2
-dim vRowCount
-dim vColumnCount
 
-vFileName = "D:\hxh\test.xlsx"
-vSheetName_1 = "ä¸­å…´1"
-vSheetName_2 = "ä¸­å…´2"
+vFileName = "D:\excel\test.xlsx"
+vSheetName_1 = "ÖĞĞË1"
+vSheetName_2 = "ÖĞĞË2"
 
+Msgbox "Èç¹ûÎÄ¼ş£º " & vFileName & " ÒÑ¾­´ò¿ª£¬Çë½«Æä¹Ø±Õ£¡£¡£¡"
 
-set oExcel = CreateObject("Excel.Application") 'åˆ›å»ºExcelå¯¹è±¡
-set oBook = oExcel.Workbooks.Open(vFileName) 'æ‰“å¼€å·¥ä½œè–„
-set oSheet_1 = oBook.Worksheets(vSheetName_1) 'è·å¾—ç¬¬ä¸€ä¸ªè¡¨æ ¼å¯¹è±¡
-set oSheet_2 = oBook.Worksheets(vSheetName_2) 'è·å¾—ç¬¬äºŒä¸ªè¡¨æ ¼å¯¹è±¡
-vRowCount = oSheet_1.UsedRange.Rows.Count
-vColumnCount = oSheet_1.UsedRange.Columns.Count
+set oExcel = CreateObject("Excel.Application") '´´½¨Excel¶ÔÏó
+set oBook = oExcel.Workbooks.Open(vFileName) '´ò¿ª¹¤×÷±¡
+set oSheet_1 = oBook.Worksheets(vSheetName_1) '»ñµÃµÚÒ»¸ö±í¸ñ¶ÔÏó
+set oSheet_2 = oBook.Worksheets(vSheetName_2) '»ñµÃµÚ¶ş¸ö±í¸ñ¶ÔÏó
 
+dim vPersonCount
+vPersonCount = oSheet_2.UsedRange.Rows.Count - 1
 Function fFindPersonIndex(personName)
 	dim ret
 	ret = 0
-	'éå†ç¬¬äºŒä¸ªè¡¨æ ¼çš„ç¬¬ä¸€åˆ—ï¼Œå¯»æ‰¾personNameçš„index
-	for idx = 1 to oSheet_2.UsedRange.Rows.Count
+	dim startIndex
+	startIndex= 1
+	'±éÀúµÚ¶ş¸ö±í¸ñµÄµÚÒ»ÁĞ£¬Ñ°ÕÒpersonNameµÄindex
+	for idx = startIndex to vPersonCount + startIndex
+		'msgbox "name: " & personName & "; cell: " & oSheet_2.Cells(idx, 1) & "; idx: " & idx & "; rows count: " & oSheet_2.UsedRange.Rows.Count
 		if oSheet_2.Cells(idx, 1) = personName then
 			ret = idx
 		end if
 	next
 
-	'å¦‚æœæ²¡æœ‰æ‰¾åˆ°personName, å°±åˆ›å»ºä¸€è¡Œå¹¶è®¾ç½®è¯¥è¡Œç¬¬ä¸€åˆ—ä¸ºpersonName
+	'Èç¹ûÃ»ÓĞÕÒµ½personName, ¾Í´´½¨Ò»ĞĞ²¢ÉèÖÃ¸ÃĞĞµÚÒ»ÁĞÎªpersonName
 	if ret = 0 then
 		oSheet_2.Rows(idx).Insert
 		oSheet_2.Cells(idx, 1) = personName
+		vPersonCount = vPersonCount + 1
 		ret = idx
+		'msgbox "no found! idx: " & idx & "; name: " & personName
 	end if
-	'è¿”å›personNameçš„index
+	'·µ»ØpersonNameµÄindex
 	fFindPersonIndex = ret
 End Function
 
-'ä¿®æ”¹ç¬¬äºŒä¸ªè¡¨æ ¼çš„å†…å®¹ï¼šæ ¹æ®personNameæ‰¾åˆ°è¡Œç´¢å¼•ï¼Œç„¶åæ ¹æ®moduleIndex
-'å’ŒmoduleNameä¿®æ”¹å“åº”çš„å•å…ƒæ ¼çš„å†…å®¹
-Function fModifyPersonModule(personName, moduleName, moduleIndex)
+'ĞŞ¸ÄµÚ¶ş¸ö±í¸ñµÄÄÚÈİ£º¸ù¾İpersonNameÕÒµ½ĞĞË÷Òı£¬È»ºó¸ù¾İmoduleIndex
+'ºÍmoduleNameĞŞ¸ÄÏìÓ¦µÄµ¥Ôª¸ñµÄÄÚÈİ
+Sub fModifyPersonModule(personName, moduleName, moduleIndex)
 	dim personIndex
 	personIndex = fFindPersonIndex(personName)
+	
 	if oSheet_2.Cells(personIndex, moduleIndex).Value = "" then
 		oSheet_2.Cells(personIndex, moduleIndex).Value = moduleName
+		'msgbox "name: " & personName & "; index: " & personIndex & "; module name: " & moduleName
 	else
-		oSheet_2.Cells(personIndex, moduleIndex).Value = oSheet_2.Cells(personIndex, moduleIndex + 1).Value & ", " & moduleName
+		oSheet_2.Cells(personIndex, moduleIndex).Value = oSheet_2.Cells(personIndex, moduleIndex).Value & ", " & moduleName
+		'msgbox "name: " & personName & "; index: " & personIndex & "; module name: " & oSheet_2.Cells(personIndex, moduleIndex).Value
 	end if
-End Function
+End Sub
 
-'éå†ç¬¬ä¸€ä¸ªè¡¨æ ¼çš„æ‰€æœ‰äººåï¼Œä»¥æ­¤ä¿®æ”¹ç¬¬äºŒä¸ªè¡¨æ ¼çš„å†…å®¹
-dim xxx
+'ÏÈÇå¿ÕµÚ¶ş¸ö±í¸ñµÄÄ£¿éĞÅÏ¢£¬µ«ÊÇ±£ÁôĞÕÃû²»±ä
+Sub fClearModuleInfo()
+	for vRow = 2 to oSheet_2.UsedRange.Rows.Count
+		for vColumn = 2 to oSheet_2.UsedRange.Columns.Count
+			oSheet_2.Cells(vRow, vColumn).Value = ""
+		next
+	next
+End Sub
+
+Sub fCloseBook()
+	'¹Ø±ÕÌáÊ¾ºó±£´æ¹¤×÷²¾
+	oExcel.DisplayAlerts = False
+	oBook.Save
+	oExcel.DisplayAlerts = True
+	'ÊÍ·ÅÄÚ´æ¶ÔÏó²¢ÍË³ö
+	set oSheet_1 = Nothing
+	set oSheet_2 = Nothing
+	oBook.Close
+	set oBook = Nothing
+	oExcel.Quit
+	set oExcel = Nothing
+End Sub
+
+'Ö÷³ÌĞò¿ªÊ¼
+dim vRowCount
+dim vColumnCount
+vRowCount = oSheet_1.UsedRange.Rows.Count
+vColumnCount = oSheet_1.UsedRange.Columns.Count
+'Çå¿ÕÄ£¿éĞÅÏ¢
+Call fClearModuleInfo()
+'±éÀúµÚÒ»¸ö±í¸ñµÄËùÓĞÈËÃû£¬ÒÔ´ËĞŞ¸ÄµÚ¶ş¸ö±í¸ñµÄÄÚÈİ
+dim vTmpModuleName
 for vRow = 2 to vRowCount
+	vTmpModuleName = oSheet_1.Cells(vRow, 1)
 	for vColumn = 2 to vColumnCount
-		msgbox vRow & " " & vColumn & " " & oSheet_1.Cells(vRow, vColumn)
-		xxx = fModifyPersonModule(oSheet_1.Cells(vRow, vColumn), oSheet_1.Cells(vRow, 1), vColumn)
+		'msgbox "cell: " & vRow & "," & vColumn & "; name: " & oSheet_1.Cells(vRow, vColumn) & "; module: " & oSheet_1.Cells(vRow, 1)
+		Call fModifyPersonModule(oSheet_1.Cells(vRow, vColumn), vTmpModuleName, vColumn)
 	next
 next
+Call fCloseBook()
 
+Msgbox "ËùÓĞ¹¤×÷ÒÑ¾­Íê³É£¬Çë²é¿´±í¸ñ£º " & vSheetName_2
 
-
-'é‡Šæ”¾å†…å­˜å¯¹è±¡å¹¶é€€å‡º
-oBook.Save
-set oSheet_1 = Nothing
-set oSheet_2 = Nothing
-oBook.Close
-set oBook = Nothing
-oExcel.Quit
-set oExcel = Nothing
