@@ -3,7 +3,7 @@
 '======================
 ' module statistics
 '
-' Author: syb(zte)
+' Author: syb(zte), hxh(zte)
 ' Date	: 2013.05.08
 '
 ' Usage :
