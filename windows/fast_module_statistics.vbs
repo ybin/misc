@@ -26,21 +26,20 @@ set oSheet_1 = oBook.Worksheets(vSheetName_1)	'获得第一个表格对象
 set oSheet_2 = oBook.Worksheets(vSheetName_2)	'获得第二个表格对象
 
 Function fFindPersonIndex(personNameArray, personName)
-	dim ret
+	'设置函数的返回值
 	'yes, 42 is a magic number.
-	ret = -42
+	fFindPersonIndex = -42
 	dim idxMin
 	dim idxMax
 	idxMin = LBound(personNameArray)
 	idxMax = UBound(personNameArray)
 	for idx = idxMin to idxMax
 		if personNameArray(idx, 1) = personName then
-			ret = idx
+			fFindPersonIndex = idx
+			exit Function
 		end if
 	next
 
-	'返回index的值
-	fFindPersonIndex = ret
 End Function
 
 Sub fModifyModuleArray(personIndex, column, moduleName)
@@ -91,6 +90,9 @@ Sub fProcessPersonInfo(personArray, row, col)
 	dim personName
 	dim remainingStr
 	txt = personArray(row, col)
+	if txt = "" then
+		exit sub
+	end if
 	
 	While txt <> ""
 		idx = InStr(txt, "、")
