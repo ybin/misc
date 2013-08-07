@@ -21,6 +21,7 @@ vSheetName_2 = "CMAC团队人力资源"
 Msgbox "如果文件： " & vFileName & " 已经打开，请将其关闭！！！"
 
 set oExcel = CreateObject("Excel.Application")	'创建Excel对象
+oExcel.Visible = False
 set oBook = oExcel.Workbooks.Open(vFileName)	'打开工作薄
 set oSheet_1 = oBook.Worksheets(vSheetName_1)	'获得第一个表格对象
 set oSheet_2 = oBook.Worksheets(vSheetName_2)	'获得第二个表格对象
@@ -39,6 +40,13 @@ Function fFindPersonIndex(personNameArray, personName)
 			exit Function
 		end if
 	next
+	if fFindPersonIndex < 0 then
+		call fClearModuleInfo()
+		call fQuitWithoutSave()
+		msgbox "personIndex out of range: " & fFindPersonIndex & ", person name: " & personName & ". Now quit without save."
+		call fKillExcelProcess()
+		WScript.Quit
+	end if
 
 End Function
 
@@ -66,9 +74,28 @@ Sub fClearModuleInfo()
 			vModuleArray(row, col) = ""
 		next
 	next
+	
+	' clear H column of sheet 2
+	rMin = LBound(vCodeLineTwo, 1)
+	rMax = UBound(vCodeLineTwo, 1)
+	cMin = LBound(vCodeLineTwo, 2)
+	cMax = UBound(vCodeLineTwo, 2)
+	for row = rMin to rMax
+		for col = cMin to cMax
+			vCodeLineTwo(row, col) = "0"
+		next
+	next
 End Sub
 
 Sub fSaveAndQuit()
+	'将结果写回excel表格中
+	oSheet_2.Range("E2:G87").Value = vModuleArray
+	oSheet_2.Range("H2:H87").Value = vCodeLineTwo
+	
+	set vPersonArray = Nothing
+	set vModuleArray = Nothing
+	set vModuleNameArray = Nothing
+	set vPersonNameArray = Nothing
 	'关闭提示后保存工作簿
 	oExcel.DisplayAlerts = False
 	oBook.Save
@@ -82,6 +109,30 @@ Sub fSaveAndQuit()
 	set oExcel = Nothing
 End Sub
 
+Sub fQuitWithoutSave()
+	'关闭提示后保存工作簿
+	'oExcel.DisplayAlerts = False
+	'oBook.Save
+	'oExcel.DisplayAlerts = True
+	'释放内存对象并退出
+	oBook.Close False
+	oExcel.Quit
+	set vPersonArray = Nothing
+	set vModuleArray = Nothing
+	set vModuleNameArray = Nothing
+	set vPersonNameArray = Nothing
+	set oSheet_1 = Nothing
+	set oSheet_2 = Nothing
+	set oBook = Nothing
+	set oExcel = Nothing
+End Sub
+
+Sub fKillExcelProcess()
+	'dim sKillExcel
+	'sKillExcel = "TASKKILL /F /IM Excel.exe"
+	'Shell sKillExcel vbHide
+End Sub
+
 ' row 对应于person array的行，用于索引 模块名称
 ' col 对应于第几个负责人，第一、二、三负责人之一
 Sub fProcessPersonInfo(personArray, row, col)
@@ -89,6 +140,7 @@ Sub fProcessPersonInfo(personArray, row, col)
 	dim txt
 	dim personName
 	dim remainingStr
+	dim pIndex
 	txt = personArray(row, col)
 	if txt = "" then
 		exit sub
@@ -105,7 +157,11 @@ Sub fProcessPersonInfo(personArray, row, col)
 			personName = Left(txt, idx - 1)
 			remainingStr = Right(txt, Len(txt) - idx)
 		end if
-		Call fModifyModuleArray(fFindPersonIndex(vPersonNameArray, personName), col, vModuleNameArray(row, 1))
+		pIndex = fFindPersonIndex(vPersonNameArray, personName)
+		Call fModifyModuleArray(pIndex, col, vModuleNameArray(row, 1))
+		' save code line number to vCodeLineTwo
+		vCodeLineTwo(pIndex, 1) = cstr(clng(trim(vCodeLineTwo(pIndex, 1))) + clng(trim(vCodeLineOne(row, 1))))
+		
 		txt = remainingStr
 	Wend
 End Sub
@@ -119,11 +175,15 @@ dim vPersonArray
 dim vModuleArray
 dim vModuleNameArray
 dim vPersonNameArray
+dim vCodeLineOne
+dim vCodeLineTwo
 
 vPersonArray = oSheet_1.Range("C4:E71").Value
 vModuleArray = oSheet_2.Range("E2:G87").Value
 vModuleNameArray = oSheet_1.Range("B4:B71").Value
 vPersonNameArray = oSheet_2.Range("C2:C87").Value
+vCodeLineOne = oSheet_1.Range("H4:H71").Value
+vCodeLineTwo = oSheet_2.Range("H2:H87").Value
 
 '清空模块信息
 Call fClearModuleInfo()
@@ -143,9 +203,9 @@ for row = rMin to rMax
 	next
 next
 
-'将结果写回excel表格中
-oSheet_2.Range("E2:G87").Value = vModuleArray
 '保存并退出
 Call fSaveAndQuit()
+call fKillExcelProcess()
 
 Msgbox "所有工作已经完成，请查看表格： " & vSheetName_2
+
